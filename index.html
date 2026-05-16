@@ -346,12 +346,86 @@
     #wheel-wrap { width: 280px; height: 280px; }
     #wheel-canvas { width: 280px; height: 280px; }
   }
+
+  /* FORFEIT CHOICE BUTTONS */
+  #forfeit-choice { width: 100%; }
+
+  .forfeit-choice-btns {
+    display: flex; gap: 12px; width: 100%; margin-bottom: 0.85rem;
+  }
+
+  .forfeit-btn {
+    flex: 1;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px; letter-spacing: 0.12em;
+    padding: 14px 8px;
+    border: none; border-radius: 6px;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .forfeit-btn:active { transform: scale(0.97); }
+
+  .drinking-btn { background: var(--gold); color: var(--dark); }
+  .drinking-btn:hover { background: var(--gold-light); }
+
+  .sober-btn {
+    background: var(--dark-4); color: var(--cream);
+    border: 1px solid rgba(212,168,67,0.3);
+  }
+  .sober-btn:hover { background: rgba(212,168,67,0.12); }
+
+  .forfeit-note {
+    font-size: 12px; color: var(--cream-dim); font-style: italic;
+    text-align: center; opacity: 0.7; line-height: 1.5;
+  }
+
+  /* FORFEIT WHEEL */
+  #forfeit-section {
+    display: flex; flex-direction: column; align-items: center; width: 100%;
+  }
+
+  #forfeit-wrap {
+    position: relative;
+    width: 280px; height: 280px;
+    margin: 0.5rem auto 1rem;
+  }
+
+  #forfeit-canvas {
+    width: 280px; height: 280px;
+    border-radius: 50%; display: block;
+    filter: drop-shadow(0 0 24px rgba(212,168,67,0.15));
+  }
+
+  #forfeit-pointer {
+    position: absolute;
+    top: -14px; left: 50%;
+    transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 11px solid transparent;
+    border-right: 11px solid transparent;
+    border-top: 26px solid var(--gold);
+    filter: drop-shadow(0 2px 5px rgba(212,168,67,0.6));
+    z-index: 10;
+  }
+
+  #forfeit-result {
+    background: var(--dark-2);
+    border: 1px solid rgba(212,168,67,0.35);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    width: 100%; margin-bottom: 1rem;
+    text-align: center;
+  }
+
+  #forfeit-result-text {
+    font-size: 17px; line-height: 1.6; color: var(--cream);
+  }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="badge">Est. 2025 · Bachelor Party</div>
+  <div class="badge">Est. 2026 · Bachelor Party</div>
   <h1>CAMP <span>FINK</span></h1>
   <div class="tagline">What Are the Odds</div>
   <div class="divider-line"></div>
@@ -391,71 +465,49 @@
     <div class="dare-rule" id="dare-rule"></div>
   </div>
 
-  <div class="or-divider">or if you'd rather not</div>
+  <div class="or-divider">OR SPIN THE FORFEIT WHEEL</div>
 
-  <div class="skip-options">
-    <div class="skip-card">
-      <span class="skip-icon">🍺</span>
-      <div>
-        <div class="skip-text">Shotgun a beer</div>
-      </div>
+  <div id="forfeit-choice">
+    <div class="forfeit-choice-btns">
+      <button class="forfeit-btn drinking-btn" onclick="showForfeitWheel('drinking')">🍺 Drinking</button>
+      <button class="forfeit-btn sober-btn" onclick="showForfeitWheel('sober')">💧 Not Drinking</button>
     </div>
-    <div class="skip-card">
-      <span class="skip-icon">🥃</span>
-      <div>
-        <div class="skip-text">Take a shot</div>
-      </div>
+  </div>
+
+  <div id="forfeit-section" style="display:none;">
+    <div id="forfeit-wrap">
+      <div id="forfeit-pointer"></div>
+      <canvas id="forfeit-canvas" width="280" height="280"></canvas>
     </div>
-    <div class="skip-card">
-      <span class="skip-icon">🏃</span>
-      <div>
-        <div class="skip-text">Designated gopher</div>
-        <div class="skip-sub">You're on errand duty for the next 30 minutes</div>
-      </div>
+    <div id="forfeit-result" style="display:none;">
+      <div id="forfeit-result-text"></div>
     </div>
-    <div class="skip-card">
-      <span class="skip-icon">🌶️</span>
-      <div>
-        <div class="skip-text">Eat something wild</div>
-        <div class="skip-sub">Group picks — hot sauce, mystery snack, whatever's around</div>
-      </div>
-    </div>
-    <div class="skip-card">
-      <span class="skip-icon">📸</span>
-      <div>
-        <div class="skip-text">Post the embarrassing photo</div>
-        <div class="skip-sub">You pick which one, group writes the caption</div>
-      </div>
-    </div>
+    <button class="spin-btn" id="forfeit-spin-btn" onclick="spinForfeitWheel()">SPIN THE WHEEL</button>
+    <button class="next-btn" id="forfeit-again-btn" style="display:none; margin-top:0.75rem; width:100%;" onclick="spinForfeitWheel()">↺ SPIN FORFEIT AGAIN</button>
+    <button class="names-toggle" onclick="resetForfeit()" style="margin-top:0.75rem;">← Change selection</button>
   </div>
 
   <button class="next-btn" onclick="goBack()">⟵ SPIN AGAIN</button>
 </div>
 
-<footer>Camp Fink · Bachelor Party · 2025</footer>
+<footer>Camp Fink · Bachelor Party · 2026</footer>
 
 <script>
 const DARES = [
-  { dare: "What are the odds you go introduce yourself to someone with a British accent and hold it for the first 30 seconds of conversation?", rule: "Pick a number between 1 and 50." },
-  { dare: "What are the odds you ask a complete stranger for their most embarrassing childhood nickname?", rule: "Pick a number between 1 and 50." },
-  { dare: "What are the odds you go up to the bar and order your next drink entirely in a foreign language?", rule: "Pick a number between 1 and 20." },
-  { dare: "What are the odds you FaceTime someone right now and tell them you're getting married next week?", rule: "Pick a number between 1 and 30." },
-  { dare: "What are the odds you do your best impression of the groom for the next 5 minutes?", rule: "Pick a number between 1 and 20." },
-  { dare: "What are the odds you go ask a stranger for a photo together and make it look like you're old friends?", rule: "Pick a number between 1 and 40." },
-  { dare: "What are the odds you narrate everything you're doing out loud for the next 10 minutes like a nature documentary?", rule: "Pick a number between 1 and 30." },
-  { dare: "What are the odds you let the group post a photo to your Instagram story — they pick which one, you write the caption?", rule: "Pick a number between 1 and 25." },
-  { dare: "What are the odds you go compliment a stranger's shoes in the most dramatic way possible?", rule: "Pick a number between 1 and 20." },
-  { dare: "What are the odds you call your mom right now and tell her you're having the time of your life?", rule: "Pick a number between 1 and 15." },
-  { dare: "What are the odds you attempt to teach the group a dance move you just made up on the spot?", rule: "Pick a number between 1 and 20." },
-  { dare: "What are the odds you go up to a stranger and ask them to settle a fake argument the group is having?", rule: "Pick a number between 1 and 35." },
-  { dare: "What are the odds you moonwalk from where you're standing to the nearest door and back?", rule: "Pick a number between 1 and 15." },
-  { dare: "What are the odds you spend the next round only responding to the name 'Big Daddy'?", rule: "Pick a number between 1 and 20." },
-  { dare: "What are the odds you tell the group your most embarrassing dating story — no skipping?", rule: "Pick a number between 1 and 25." },
-  { dare: "What are the odds you walk up to a stranger and ask if they want to hear a toast for your best friend who's getting married?", rule: "Pick a number between 1 and 30." },
-  { dare: "What are the odds you do 10 pushups right now, in the middle of wherever you are?", rule: "Pick a number between 1 and 15." },
-  { dare: "What are the odds you go find someone named 'Mike' in this venue and introduce yourself as his biggest fan?", rule: "Pick a number between 1 and 40." },
-  { dare: "What are the odds you let the group change your contact name in someone's phone to something ridiculous for the rest of the night?", rule: "Pick a number between 1 and 20." },
-  { dare: "What are the odds you walk up to a random table and confidently ask if this is where the bachelor party is?", rule: "Pick a number between 1 and 25." },
+  { dare: "What are the odds you have to go up to a random stranger and challenge them to a high-stakes thumb wrestle right now?", rule: "Pick a number between 1 and 30." },
+  { dare: "What are the odds you have to start singing a famous song loudly next to a stranger and force them to 'finish that lyric'?", rule: "Pick a number between 1 and 30." },
+  { dare: "What are the odds you have to ask a stranger to take your photo, but you leave a massive gap next to you and pose like you're holding your invisible best friend?", rule: "Pick a number between 1 and 30." },
+  { dare: "What are the odds you have to compliment a stranger's shoes, and then deadpan ask them if you can try them on?", rule: "Pick a number between 1 and 30." },
+  { dare: "What are the odds you have to walk up to a group of three strangers, interrupt them, and deliver a heartfelt, overly emotional toast to their friendship?", rule: "Pick a number between 1 and 30." },
+  { dare: "What are the odds you have to ask a stranger a question, and then aggressively try to finish their sentence for them while they're talking?", rule: "Pick a number between 1 and 30." },
+  { dare: "What are the odds you have to pour two shots of tap water, clink glasses with a stranger, and slam it like it's heavy liquor?", rule: "Pick a number between 1 and 30." },
+  { dare: "What are the odds your next drink at the bar has to be chosen entirely by the closest stranger next to you, and you have to drink it no matter what it is?", rule: "Pick a number between 1 and 30." },
+  { dare: "What are the odds you have to ask a stranger to physically feed you your next sip of beer like a baby bird?", rule: "Pick a number between 1 and 30." },
+  { dare: "What are the odds you have to start a slow clap and keep it going for a full 45 seconds, even if absolutely no one joins you?", rule: "Pick a number between 1 and 30." },
+  { dare: "What are the odds you have to sit down at a lunch table full of strangers, sigh deeply, and ask who the 'alpha' of the cabin is?", rule: "Pick a number between 1 and 30." },
+  { dare: "What are the odds you start a completely fake, high-drama rivalry with another random cabin?", rule: "Pick a number between 1 and 30." },
+  { dare: "What are the odds you have to ask a stranger to be your 'platonic accountability partner' for making sure you stay hydrated during arts and crafts?", rule: "Pick a number between 1 and 30." },
+  { dare: "What are the odds you have to walk up to a stranger at a camp activity and ask them if they think you have what it takes to win the 'Camp MVP' award?", rule: "Pick a number between 1 and 30." },
 ];
 
 const COLORS = [
@@ -464,7 +516,7 @@ const COLORS = [
   '#922B21','#1F618D','#196F3D','#6E2F1A','#4A235A',
 ];
 
-let players = ['Groom', 'Best Man', 'Jake', 'Tyler', 'Marcus', 'Caleb'];
+let players = ['Brian Natoli','Brian Campbell','Dave','Derek','Devin','Henry','Jeff','Joe','Josh','Michael','Randall','Simon','TJ','Andrew','Anthony','Avi','Brett'];
 let spinning = false;
 let angle = 0;
 let nameManagerVisible = false;
@@ -657,7 +709,148 @@ function goBack() {
   document.getElementById('dare-screen').classList.remove('active');
   document.getElementById('wheel-screen').classList.add('active');
   document.getElementById('selected-name').textContent = '';
+  document.getElementById('forfeit-section').style.display = 'none';
+  document.getElementById('forfeit-choice').style.display = 'block';
   window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── FORFEIT WHEEL ─────────────────────────────────────────────
+const DRINKING_FORFEITS = [
+  { label: 'Take a shot',  full: 'Take a shot.' },
+  { label: 'Shotgun',      full: 'Shotgun a beer.' },
+  { label: 'Accent',       full: "Speak with an accent of Andrew's choosing for the next 20 minutes." },
+  { label: 'Charades',     full: 'Remain silent for the next 20 minutes — but must respond to questions only by using aggressive charades.' },
+  { label: 'Whisper',      full: 'Whisper for the next 20 minutes.' },
+  { label: '3rd Person',   full: 'Speak in the 3rd person for the next 20 minutes.' },
+  { label: 'Stay Close',   full: 'Stay within 3 feet of Andrew for the next 20 minutes.' },
+  { label: 'Agreeable',    full: 'You must be incredibly agreeable for the next 20 minutes.' },
+  { label: '5-Sec Delay',  full: 'The Delayed Reaction: You are not allowed to respond to anything said until a full 5 seconds has passed. Count to 5 in your head.' },
+];
+
+const SOBER_FORFEITS = DRINKING_FORFEITS.filter(f => f.label !== 'Take a shot' && f.label !== 'Shotgun');
+
+let forfeitItems = [];
+let forfeitAngle = 0;
+let forfeitSpinning = false;
+
+function showForfeitWheel(type) {
+  forfeitItems = type === 'drinking' ? [...DRINKING_FORFEITS] : [...SOBER_FORFEITS];
+  forfeitAngle = 0;
+  forfeitSpinning = false;
+  document.getElementById('forfeit-choice').style.display = 'none';
+  document.getElementById('forfeit-section').style.display = 'flex';
+  document.getElementById('forfeit-result').style.display = 'none';
+  document.getElementById('forfeit-result-text').textContent = '';
+  document.getElementById('forfeit-spin-btn').style.display = 'inline-block';
+  document.getElementById('forfeit-spin-btn').disabled = false;
+  document.getElementById('forfeit-again-btn').style.display = 'none';
+  drawForfeitWheel(0);
+}
+
+function resetForfeit() {
+  document.getElementById('forfeit-section').style.display = 'none';
+  document.getElementById('forfeit-choice').style.display = 'block';
+}
+
+function drawForfeitWheel(rotation) {
+  const canvas = document.getElementById('forfeit-canvas');
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  const cx = w / 2, cy = h / 2, r = cx - 8;
+  const n = forfeitItems.length;
+  const arc = (2 * Math.PI) / n;
+
+  ctx.clearRect(0, 0, w, h);
+
+  for (let i = 0; i < n; i++) {
+    const start = rotation + i * arc;
+    const end = start + arc;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, start, end);
+    ctx.closePath();
+    ctx.fillStyle = COLORS[i % COLORS.length];
+    ctx.fill();
+    ctx.strokeStyle = '#0F0E0C';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(start + arc / 2);
+    const fontSize = n > 8 ? 10 : 12;
+    ctx.font = `600 ${fontSize}px 'DM Sans', sans-serif`;
+    ctx.fillStyle = '#F5EDD8';
+    ctx.textAlign = 'right';
+    ctx.shadowColor = 'rgba(0,0,0,0.6)';
+    ctx.shadowBlur = 4;
+    ctx.fillText(forfeitItems[i].label, r - 10, fontSize / 3);
+    ctx.restore();
+  }
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+  ctx.strokeStyle = '#D4A843';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, 18, 0, 2 * Math.PI);
+  ctx.fillStyle = '#0F0E0C';
+  ctx.fill();
+  ctx.strokeStyle = '#D4A843';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.font = "bold 12px 'DM Sans', sans-serif";
+  ctx.fillStyle = '#D4A843';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('✦', cx, cy);
+}
+
+function spinForfeitWheel() {
+  if (forfeitSpinning || forfeitItems.length < 2) return;
+  forfeitSpinning = true;
+  document.getElementById('forfeit-spin-btn').disabled = true;
+  document.getElementById('forfeit-again-btn').style.display = 'none';
+  document.getElementById('forfeit-result').style.display = 'none';
+
+  const n = forfeitItems.length;
+  const arc = (2 * Math.PI) / n;
+  const extraSpins = 6 + Math.floor(Math.random() * 5);
+  const targetSlice = Math.floor(Math.random() * n);
+  const pointerAngle = -Math.PI / 2;
+  const sliceCenter = targetSlice * arc + arc / 2;
+  const targetAngle = forfeitAngle + extraSpins * 2 * Math.PI +
+    (pointerAngle - sliceCenter - forfeitAngle % (2 * Math.PI) + 4 * Math.PI) % (2 * Math.PI);
+
+  const startAngle = forfeitAngle;
+  const delta = targetAngle - startAngle;
+  const duration = 3800 + Math.random() * 1000;
+  const start = performance.now();
+
+  function easeOut(t) { return 1 - Math.pow(1 - t, 4); }
+
+  function animate(now) {
+    const t = Math.min((now - start) / duration, 1);
+    forfeitAngle = startAngle + delta * easeOut(t);
+    drawForfeitWheel(forfeitAngle);
+    if (t < 1) {
+      requestAnimationFrame(animate);
+    } else {
+      forfeitSpinning = false;
+      showForfeitResult(targetSlice);
+    }
+  }
+  requestAnimationFrame(animate);
+}
+
+function showForfeitResult(slice) {
+  document.getElementById('forfeit-result-text').textContent = forfeitItems[slice].full;
+  document.getElementById('forfeit-result').style.display = 'block';
+  document.getElementById('forfeit-spin-btn').style.display = 'none';
+  document.getElementById('forfeit-again-btn').style.display = 'block';
 }
 
 drawWheel(0);
