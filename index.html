@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Camp Fink — Bachelor Party</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #D4A843;
+    --gold-light: #F0C96A;
+    --dark: #0F0E0C;
+    --dark-2: #1A1814;
+    --dark-3: #252320;
+    --dark-4: #302E2A;
+    --cream: #F5EDD8;
+    --cream-dim: #C8BC9E;
+    --red: #C0392B;
+    --green: #27AE60;
+    --blue: #2980B9;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--dark);
+    color: var(--cream);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* NOISE TEXTURE OVERLAY */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 0;
+    opacity: 0.35;
+  }
+
+  /* HEADER */
+  header {
+    text-align: center;
+    padding: 2rem 1rem 1rem;
+    position: relative; z-index: 1;
+  }
+
+  .badge {
+    display: inline-block;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    color: var(--gold);
+    border: 1px solid var(--gold);
+    padding: 4px 14px;
+    border-radius: 2px;
+    margin-bottom: 12px;
+    opacity: 0.85;
+  }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(44px, 12vw, 80px);
+    letter-spacing: 0.04em;
+    line-height: 0.9;
+    color: var(--cream);
+    text-shadow: 0 0 60px rgba(212,168,67,0.2);
+  }
+
+  h1 span { color: var(--gold); }
+
+  .tagline {
+    font-size: 13px;
+    color: var(--cream-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 10px;
+  }
+
+  .divider-line {
+    width: 60px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin: 1.25rem auto;
+  }
+
+  /* SCREENS */
+  .screen { display: none; position: relative; z-index: 1; }
+  .screen.active { display: block; }
+
+  /* WHEEL SCREEN */
+  #wheel-screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 1rem 2rem;
+  }
+  #wheel-screen.active { display: flex; }
+
+  #wheel-wrap {
+    position: relative;
+    width: 320px; height: 320px;
+    margin: 0.5rem auto 1.25rem;
+  }
+
+  #wheel-canvas {
+    width: 320px; height: 320px;
+    border-radius: 50%;
+    display: block;
+    filter: drop-shadow(0 0 30px rgba(212,168,67,0.15));
+  }
+
+  #wheel-pointer {
+    position: absolute;
+    top: -16px; left: 50%;
+    transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 13px solid transparent;
+    border-right: 13px solid transparent;
+    border-top: 30px solid var(--gold);
+    filter: drop-shadow(0 2px 6px rgba(212,168,67,0.6));
+    z-index: 10;
+  }
+
+  #selected-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 42px;
+    letter-spacing: 0.06em;
+    color: var(--gold);
+    min-height: 52px;
+    text-align: center;
+    text-shadow: 0 0 30px rgba(212,168,67,0.5);
+    transition: opacity 0.3s;
+  }
+
+  .spin-btn {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 0.18em;
+    padding: 14px 52px;
+    background: var(--gold);
+    color: var(--dark);
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    margin-top: 0.5rem;
+  }
+  .spin-btn:hover { background: var(--gold-light); }
+  .spin-btn:active { transform: scale(0.97); }
+  .spin-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+  /* NAMES MANAGER */
+  .names-toggle {
+    background: none; border: none; cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px; color: var(--cream-dim);
+    letter-spacing: 0.06em;
+    text-decoration: underline; text-underline-offset: 3px;
+    margin-bottom: 1rem;
+  }
+  .names-toggle:hover { color: var(--cream); }
+
+  #name-manager {
+    background: var(--dark-3);
+    border: 1px solid var(--dark-4);
+    border-radius: 8px;
+    padding: 1rem;
+    width: 100%;
+    max-width: 360px;
+    margin-bottom: 1.25rem;
+  }
+
+  #names-grid {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;
+  }
+
+  .name-chip {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--dark-4);
+    border: 1px solid rgba(212,168,67,0.2);
+    border-radius: 20px;
+    padding: 4px 10px 4px 13px;
+    font-size: 13px; color: var(--cream);
+  }
+
+  .remove-name {
+    background: none; border: none; cursor: pointer;
+    color: var(--cream-dim); font-size: 17px; line-height: 1;
+    padding: 0;
+  }
+  .remove-name:hover { color: var(--gold); }
+
+  #add-name-row { display: flex; gap: 8px; }
+
+  #new-name-input {
+    flex: 1;
+    background: var(--dark-2);
+    border: 1px solid var(--dark-4);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--cream);
+    outline: none;
+  }
+  #new-name-input:focus { border-color: rgba(212,168,67,0.4); }
+  #new-name-input::placeholder { color: var(--cream-dim); opacity: 0.5; }
+
+  .add-btn {
+    background: var(--dark-4);
+    border: 1px solid rgba(212,168,67,0.3);
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; color: var(--gold);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .add-btn:hover { background: rgba(212,168,67,0.12); }
+
+  /* DARE SCREEN */
+  #dare-screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 1rem 2rem;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  #dare-screen.active { display: flex; }
+
+  #dare-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    width: 100%;
+  }
+
+  #dare-player-label {
+    font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--cream-dim); margin-bottom: 6px;
+  }
+
+  #dare-player-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 52px; letter-spacing: 0.06em;
+    color: var(--gold);
+    text-shadow: 0 0 40px rgba(212,168,67,0.4);
+    line-height: 1;
+  }
+
+  .dare-card {
+    background: var(--dark-2);
+    border: 1px solid rgba(212,168,67,0.25);
+    border-radius: 10px;
+    padding: 1.5rem;
+    width: 100%;
+    margin-bottom: 1rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .dare-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0;
+    width: 4px; height: 100%;
+    background: var(--gold);
+    border-radius: 10px 0 0 10px;
+  }
+
+  .dare-badge {
+    font-size: 10px; font-weight: 600;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 10px;
+    padding-left: 4px;
+  }
+
+  .dare-text {
+    font-size: 18px; line-height: 1.55;
+    color: var(--cream);
+    margin-bottom: 12px;
+    padding-left: 4px;
+  }
+
+  .dare-rule {
+    font-size: 13px; color: var(--gold);
+    font-style: italic; padding-left: 4px;
+    opacity: 0.8;
+  }
+
+  .or-divider {
+    display: flex; align-items: center; gap: 12px;
+    width: 100%; margin: 0.5rem 0 1rem;
+    color: var(--cream-dim); font-size: 12px;
+    letter-spacing: 0.12em; text-transform: uppercase;
+  }
+  .or-divider::before, .or-divider::after {
+    content: ''; flex: 1; height: 1px;
+    background: var(--dark-4);
+  }
+
+  .skip-options { width: 100%; display: flex; flex-direction: column; gap: 10px; margin-bottom: 1.5rem; }
+
+  .skip-card {
+    background: var(--dark-3);
+    border: 1px solid var(--dark-4);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    display: flex; align-items: center; gap: 14px;
+  }
+
+  .skip-icon { font-size: 22px; flex-shrink: 0; }
+  .skip-text { font-size: 15px; color: var(--cream); }
+  .skip-sub { font-size: 12px; color: var(--cream-dim); margin-top: 2px; }
+
+  .next-btn {
+    width: 100%;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px; letter-spacing: 0.18em;
+    padding: 14px;
+    background: transparent;
+    color: var(--gold);
+    border: 1px solid var(--gold);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+  .next-btn:hover {
+    background: var(--gold);
+    color: var(--dark);
+  }
+
+  footer {
+    text-align: center;
+    padding: 1.5rem;
+    font-size: 12px;
+    color: var(--cream-dim);
+    opacity: 0.4;
+    letter-spacing: 0.06em;
+    position: relative; z-index: 1;
+  }
+
+  @media (max-width: 400px) {
+    #wheel-wrap { width: 280px; height: 280px; }
+    #wheel-canvas { width: 280px; height: 280px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="badge">Est. 2025 · Bachelor Party</div>
+  <h1>CAMP <span>FINK</span></h1>
+  <div class="tagline">What Are the Odds</div>
+  <div class="divider-line"></div>
+</header>
+
+<!-- WHEEL SCREEN -->
+<div id="wheel-screen" class="screen active">
+  <button class="names-toggle" onclick="toggleNames()">✦ Edit Players</button>
+
+  <div id="name-manager" style="display:none;">
+    <div id="names-grid"></div>
+    <div id="add-name-row">
+      <input type="text" id="new-name-input" placeholder="Add player..." />
+      <button class="add-btn" onclick="addName()">Add</button>
+    </div>
+  </div>
+
+  <div id="wheel-wrap">
+    <div id="wheel-pointer"></div>
+    <canvas id="wheel-canvas" width="320" height="320"></canvas>
+  </div>
+
+  <div id="selected-name"></div>
+  <button class="spin-btn" id="spin-btn" onclick="spinWheel()">SPIN THE WHEEL</button>
+</div>
+
+<!-- DARE SCREEN -->
+<div id="dare-screen" class="screen">
+  <div id="dare-header">
+    <div id="dare-player-label">On the hot seat</div>
+    <div id="dare-player-name"></div>
+  </div>
+
+  <div class="dare-card">
+    <div class="dare-badge">⚡ What Are the Odds</div>
+    <div class="dare-text" id="dare-text"></div>
+    <div class="dare-rule" id="dare-rule"></div>
+  </div>
+
+  <div class="or-divider">or if you'd rather not</div>
+
+  <div class="skip-options">
+    <div class="skip-card">
+      <span class="skip-icon">🍺</span>
+      <div>
+        <div class="skip-text">Shotgun a beer</div>
+      </div>
+    </div>
+    <div class="skip-card">
+      <span class="skip-icon">🥃</span>
+      <div>
+        <div class="skip-text">Take a shot</div>
+      </div>
+    </div>
+    <div class="skip-card">
+      <span class="skip-icon">🏃</span>
+      <div>
+        <div class="skip-text">Designated gopher</div>
+        <div class="skip-sub">You're on errand duty for the next 30 minutes</div>
+      </div>
+    </div>
+    <div class="skip-card">
+      <span class="skip-icon">🌶️</span>
+      <div>
+        <div class="skip-text">Eat something wild</div>
+        <div class="skip-sub">Group picks — hot sauce, mystery snack, whatever's around</div>
+      </div>
+    </div>
+    <div class="skip-card">
+      <span class="skip-icon">📸</span>
+      <div>
+        <div class="skip-text">Post the embarrassing photo</div>
+        <div class="skip-sub">You pick which one, group writes the caption</div>
+      </div>
+    </div>
+  </div>
+
+  <button class="next-btn" onclick="goBack()">⟵ SPIN AGAIN</button>
+</div>
+
+<footer>Camp Fink · Bachelor Party · 2025</footer>
+
+<script>
+const DARES = [
+  { dare: "What are the odds you go introduce yourself to someone with a British accent and hold it for the first 30 seconds of conversation?", rule: "Pick a number between 1 and 50." },
+  { dare: "What are the odds you ask a complete stranger for their most embarrassing childhood nickname?", rule: "Pick a number between 1 and 50." },
+  { dare: "What are the odds you go up to the bar and order your next drink entirely in a foreign language?", rule: "Pick a number between 1 and 20." },
+  { dare: "What are the odds you FaceTime someone right now and tell them you're getting married next week?", rule: "Pick a number between 1 and 30." },
+  { dare: "What are the odds you do your best impression of the groom for the next 5 minutes?", rule: "Pick a number between 1 and 20." },
+  { dare: "What are the odds you go ask a stranger for a photo together and make it look like you're old friends?", rule: "Pick a number between 1 and 40." },
+  { dare: "What are the odds you narrate everything you're doing out loud for the next 10 minutes like a nature documentary?", rule: "Pick a number between 1 and 30." },
+  { dare: "What are the odds you let the group post a photo to your Instagram story — they pick which one, you write the caption?", rule: "Pick a number between 1 and 25." },
+  { dare: "What are the odds you go compliment a stranger's shoes in the most dramatic way possible?", rule: "Pick a number between 1 and 20." },
+  { dare: "What are the odds you call your mom right now and tell her you're having the time of your life?", rule: "Pick a number between 1 and 15." },
+  { dare: "What are the odds you attempt to teach the group a dance move you just made up on the spot?", rule: "Pick a number between 1 and 20." },
+  { dare: "What are the odds you go up to a stranger and ask them to settle a fake argument the group is having?", rule: "Pick a number between 1 and 35." },
+  { dare: "What are the odds you moonwalk from where you're standing to the nearest door and back?", rule: "Pick a number between 1 and 15." },
+  { dare: "What are the odds you spend the next round only responding to the name 'Big Daddy'?", rule: "Pick a number between 1 and 20." },
+  { dare: "What are the odds you tell the group your most embarrassing dating story — no skipping?", rule: "Pick a number between 1 and 25." },
+  { dare: "What are the odds you walk up to a stranger and ask if they want to hear a toast for your best friend who's getting married?", rule: "Pick a number between 1 and 30." },
+  { dare: "What are the odds you do 10 pushups right now, in the middle of wherever you are?", rule: "Pick a number between 1 and 15." },
+  { dare: "What are the odds you go find someone named 'Mike' in this venue and introduce yourself as his biggest fan?", rule: "Pick a number between 1 and 40." },
+  { dare: "What are the odds you let the group change your contact name in someone's phone to something ridiculous for the rest of the night?", rule: "Pick a number between 1 and 20." },
+  { dare: "What are the odds you walk up to a random table and confidently ask if this is where the bachelor party is?", rule: "Pick a number between 1 and 25." },
+];
+
+const COLORS = [
+  '#8B4513','#C0392B','#D35400','#16A085','#1A5276',
+  '#6C3483','#1E8449','#B7950B','#784212','#17202A',
+  '#922B21','#1F618D','#196F3D','#6E2F1A','#4A235A',
+];
+
+let players = ['Groom', 'Best Man', 'Jake', 'Tyler', 'Marcus', 'Caleb'];
+let spinning = false;
+let angle = 0;
+let nameManagerVisible = false;
+
+function toggleNames() {
+  nameManagerVisible = !nameManagerVisible;
+  document.getElementById('name-manager').style.display = nameManagerVisible ? 'block' : 'none';
+  renderChips();
+}
+
+function renderChips() {
+  const grid = document.getElementById('names-grid');
+  grid.innerHTML = players.map((p, i) => `
+    <div class="name-chip">
+      ${p}
+      <button class="remove-name" onclick="removeName(${i})" aria-label="Remove ${p}">×</button>
+    </div>
+  `).join('');
+}
+
+function removeName(i) {
+  if (players.length <= 2) return;
+  players.splice(i, 1);
+  renderChips();
+  drawWheel(angle);
+}
+
+function addName() {
+  const input = document.getElementById('new-name-input');
+  const val = input.value.trim();
+  if (!val) return;
+  players.push(val);
+  input.value = '';
+  renderChips();
+  drawWheel(angle);
+}
+
+document.getElementById('new-name-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addName();
+});
+
+function drawWheel(rotation) {
+  const canvas = document.getElementById('wheel-canvas');
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  const cx = w / 2, cy = h / 2, r = cx - 8;
+  const n = players.length;
+  const arc = (2 * Math.PI) / n;
+
+  ctx.clearRect(0, 0, w, h);
+
+  for (let i = 0; i < n; i++) {
+    const start = rotation + i * arc;
+    const end = start + arc;
+
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, start, end);
+    ctx.closePath();
+    ctx.fillStyle = COLORS[i % COLORS.length];
+    ctx.fill();
+    ctx.strokeStyle = '#0F0E0C';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(start + arc / 2);
+
+    const fontSize = n > 9 ? 11 : n > 6 ? 13 : 15;
+    ctx.font = `600 ${fontSize}px 'DM Sans', sans-serif`;
+    ctx.fillStyle = '#F5EDD8';
+    ctx.textAlign = 'right';
+    ctx.shadowColor = 'rgba(0,0,0,0.6)';
+    ctx.shadowBlur = 4;
+    ctx.fillText(players[i], r - 14, fontSize / 3);
+    ctx.restore();
+  }
+
+  // Gold ring
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+  ctx.strokeStyle = '#D4A843';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  // Center cap
+  ctx.beginPath();
+  ctx.arc(cx, cy, 20, 0, 2 * Math.PI);
+  ctx.fillStyle = '#0F0E0C';
+  ctx.fill();
+  ctx.strokeStyle = '#D4A843';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.font = "bold 14px 'DM Sans', sans-serif";
+  ctx.fillStyle = '#D4A843';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('✦', cx, cy);
+}
+
+function spinWheel() {
+  if (spinning || players.length < 2) return;
+  spinning = true;
+  document.getElementById('spin-btn').disabled = true;
+  document.getElementById('selected-name').style.opacity = '0';
+  document.getElementById('selected-name').textContent = '';
+
+  const n = players.length;
+  const arc = (2 * Math.PI) / n;
+  const extraSpins = 7 + Math.floor(Math.random() * 5);
+  const targetSlice = Math.floor(Math.random() * n);
+  const pointerAngle = -Math.PI / 2;
+  const sliceCenter = targetSlice * arc + arc / 2;
+  const targetAngle = angle + extraSpins * 2 * Math.PI + (pointerAngle - sliceCenter - angle % (2 * Math.PI) + 4 * Math.PI) % (2 * Math.PI);
+
+  const startAngle = angle;
+  const delta = targetAngle - startAngle;
+  const duration = 4200 + Math.random() * 1200;
+  const start = performance.now();
+
+  function easeOut(t) { return 1 - Math.pow(1 - t, 4); }
+
+  function animate(now) {
+    const t = Math.min((now - start) / duration, 1);
+    angle = startAngle + delta * easeOut(t);
+    drawWheel(angle);
+    if (t < 1) {
+      requestAnimationFrame(animate);
+    } else {
+      spinning = false;
+      blinkSlice(targetSlice, 0);
+    }
+  }
+
+  requestAnimationFrame(animate);
+}
+
+function blinkSlice(slice, count) {
+  if (count >= 8) { revealAndAdvance(slice); return; }
+  const canvas = document.getElementById('wheel-canvas');
+  const ctx = canvas.getContext('2d');
+  const cx = canvas.width / 2, cy = canvas.height / 2, r = cx - 8;
+  const n = players.length;
+  const arc = (2 * Math.PI) / n;
+  const start = angle + slice * arc;
+  const end = start + arc;
+
+  if (count % 2 === 0) {
+    ctx.beginPath(); ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, start, end);
+    ctx.closePath();
+    ctx.fillStyle = '#F0C96A';
+    ctx.fill();
+    ctx.strokeStyle = '#0F0E0C'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.save();
+    ctx.translate(cx, cy); ctx.rotate(start + arc / 2);
+    const fontSize = n > 9 ? 11 : n > 6 ? 13 : 15;
+    ctx.font = `700 ${fontSize}px 'DM Sans', sans-serif`;
+    ctx.fillStyle = '#0F0E0C';
+    ctx.textAlign = 'right';
+    ctx.fillText(players[slice], r - 14, fontSize / 3);
+    ctx.restore();
+  } else {
+    drawWheel(angle);
+  }
+  setTimeout(() => blinkSlice(slice, count + 1), 180);
+}
+
+function revealAndAdvance(slice) {
+  const nameEl = document.getElementById('selected-name');
+  nameEl.textContent = players[slice];
+  nameEl.style.opacity = '1';
+  document.getElementById('spin-btn').disabled = false;
+  setTimeout(() => showDare(players[slice]), 1400);
+}
+
+function showDare(name) {
+  const dare = DARES[Math.floor(Math.random() * DARES.length)];
+  document.getElementById('dare-player-name').textContent = name;
+  document.getElementById('dare-text').textContent = dare.dare;
+  document.getElementById('dare-rule').textContent = dare.rule;
+  document.getElementById('wheel-screen').classList.remove('active');
+  document.getElementById('dare-screen').classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function goBack() {
+  document.getElementById('dare-screen').classList.remove('active');
+  document.getElementById('wheel-screen').classList.add('active');
+  document.getElementById('selected-name').textContent = '';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+drawWheel(0);
+</script>
+</body>
+</html>
